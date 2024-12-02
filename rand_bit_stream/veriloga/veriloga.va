@@ -1,0 +1,72 @@
+`include "discipline.h"
+`include "constants.h"
+
+// $Date: 2000/03/13 23:00:55 $
+// $Revision: 1.2 $
+//
+//
+// Based on the OVI Verilog-A Language Reference Manual, version 1.0 1996
+//
+//
+ 
+ 
+
+//--------------------
+// rand_bit_stream
+//
+// -  Random bit steam generator
+//
+// vout:	[V,A]
+//
+// INSTANCE parameters
+//    tperiod     = period of stream [s]
+//    seed        = random number seed []
+//    vlogic_high = output voltage for high [V]
+//    vlogic_low  = output voltage for low  [V]
+//    tdel, trise, tfall = {usual} [s]
+//
+// MODEL parameters
+//    {none}
+//
+// This model generates a random steam of bits.
+//
+(* instrument_module *)
+module rand_bit_stream2 (vout);
+output vout;
+electrical vout;
+parameter real tperiod = 1 from (0:inf);
+parameter integer seed = 21;
+parameter real vlogic_high = 5;
+parameter real vlogic_low  = 0 ;
+parameter real tdel=0 from [0:inf);
+parameter real trise=1n;
+parameter real tfall=1n;
+
+   real next;
+   integer bit;
+
+   real vout_val;
+   integer iseed;
+
+
+   analog begin
+      @ ( initial_step ) begin
+	 next = $abstime + tperiod;
+	 bit = 0;
+	 iseed = seed;
+	 vout_val = vlogic_low;
+      end
+
+      $bound_step(tperiod);
+
+      bit = abs($random(iseed)) & 1;
+      @ ( timer( next )) begin
+         vout_val = (vlogic_high - vlogic_low) * bit + vlogic_low;
+         next = next + tperiod;
+      end
+
+      V(vout) <+ transition(vout_val,tdel,trise,tfall);
+    end
+endmodule
+
+
